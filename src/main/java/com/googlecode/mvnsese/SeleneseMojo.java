@@ -1,5 +1,7 @@
 package com.googlecode.mvnsese;
 
+import com.googlecode.mvnsese.exec.SuiteResult;
+import com.googlecode.mvnsese.exec.SuiteRunner;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import static com.googlecode.mvnsese.SuiteRunner.SuiteResult;
 
 /**
  *

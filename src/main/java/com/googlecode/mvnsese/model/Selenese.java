@@ -1,4 +1,4 @@
-package com.googlecode.mvnsese;
+package com.googlecode.mvnsese.model;
 
 public class Selenese {
 

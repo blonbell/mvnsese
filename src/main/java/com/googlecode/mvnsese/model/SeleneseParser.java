@@ -1,5 +1,9 @@
-package com.googlecode.mvnsese;
+package com.googlecode.mvnsese.model;
 
+import com.googlecode.mvnsese.model.Command;
+import com.googlecode.mvnsese.model.Selenese;
+import com.googlecode.mvnsese.model.SeleneseSuite;
+import com.googlecode.mvnsese.model.SeleneseTest;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
