@@ -1,6 +1,7 @@
 
 package com.googlecode.mvnsese;
 
+import com.googlecode.mvnsese.exec.DefaultWebDriverProfileFactory;
 import com.googlecode.mvnsese.exec.SuiteResult;
 import com.googlecode.mvnsese.exec.SuiteRunner;
 import java.io.File;
@@ -41,7 +42,7 @@ public class SeleneseRunnerTest {
    public void runSuite() throws Exception{
        File suite = new File("target/test-classes/googleSuite.html");
        File report = new File("target/selenese-report/googleSuite.html");
-       SuiteRunner runner = new SuiteRunner(null, suite, report);
+       SuiteRunner runner = new SuiteRunner(DefaultWebDriverProfileFactory.PROFILE,null, suite, report);
         SuiteResult result = runner.call();
        assertEquals(1, result.getTotalTests());
        assertEquals(0, result.getTestFailures());
