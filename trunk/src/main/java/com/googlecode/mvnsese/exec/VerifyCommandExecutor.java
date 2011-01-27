@@ -15,10 +15,23 @@ public class VerifyCommandExecutor extends ReflectiveCommandExecutor {
     public CommandResult execute(Selenium s, Map<String, Object> env, Command c) {
         CommandResult res = new CommandResult(c);
         try {
-            Boolean b = (Boolean) execute(s, c);
-            if (!b) {
-                res.setResult(Result.FAILED);
+            Object r = execute(s, c);
+            if (r == null){
+                res.fail(String.format("Element %s not found",c.getTarget()));
+            }else if (r instanceof Boolean) {
+                Boolean b = (Boolean) r;
+                if (!b) {
+                    res.setResult(Result.FAILED);
+                }
+            } else if (r instanceof String) {
+                String st = (String) r;
+                if (!st.equals(c.getValue())) {
+                    res.fail(String.format("Actual value '%s' did not match '%s'",st,c.getValue()));
+                }
+            } else {
+                res.fail("Unknown return type");
             }
+
         } catch (SeleniumException se) {
             res.fail(se.getMessage());
         }

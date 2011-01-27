@@ -103,7 +103,7 @@ public class SuiteRunner implements Callable<SuiteResult> {
                     //log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
                     if (result.getResult() != Result.PASSED) {
                         log.append(String.format("error %s\n", result.getMsg()));
-                        log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                        //log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
                         if (!testFailed) {
                             log.append(String.format("warn: currentTest.recordFailure: false\n"));
                         }
