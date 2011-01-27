@@ -1,5 +1,5 @@
 
-package com.googlecode.mvnsese;
+package com.googlecode.mvnsese.model;
 
 import java.util.List;
 

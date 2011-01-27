@@ -1,7 +1,8 @@
 
 package com.googlecode.mvnsese;
 
-import com.googlecode.mvnsese.SuiteRunner;
+import com.googlecode.mvnsese.exec.SuiteResult;
+import com.googlecode.mvnsese.exec.SuiteRunner;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -41,7 +42,7 @@ public class SeleneseRunnerTest {
        File suite = new File("target/test-classes/googleSuite.html");
        File report = new File("target/selenese-report/googleSuite.html");
        SuiteRunner runner = new SuiteRunner(null, suite, report);
-       SuiteRunner.SuiteResult result = runner.call();
+        SuiteResult result = runner.call();
        assertEquals(1, result.getTotalTests());
        assertEquals(0, result.getTestFailures());
 

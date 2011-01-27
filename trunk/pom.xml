@@ -14,6 +14,7 @@
 
     <groupId>com.googlecode.mvnsese</groupId>
     <artifactId>selenese-plugin</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <name>Maven Plugin for executing Selenium Selenese Tests</name>
     <description>Maven Plugin for executing Selenium Selenese Tests.</description>
     <packaging>maven-plugin</packaging>

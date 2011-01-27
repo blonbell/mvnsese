@@ -1,11 +1,11 @@
 
 package com.googlecode.mvnsese;
 
-import com.googlecode.mvnsese.SeleneseTest;
-import com.googlecode.mvnsese.SeleneseSuite;
-import com.googlecode.mvnsese.SeleneseParser;
-import com.googlecode.mvnsese.Command;
-import com.googlecode.mvnsese.Selenese;
+import com.googlecode.mvnsese.model.SeleneseTest;
+import com.googlecode.mvnsese.model.SeleneseSuite;
+import com.googlecode.mvnsese.model.SeleneseParser;
+import com.googlecode.mvnsese.model.Command;
+import com.googlecode.mvnsese.model.Selenese;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
