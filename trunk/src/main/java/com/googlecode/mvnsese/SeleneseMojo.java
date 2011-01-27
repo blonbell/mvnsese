@@ -25,7 +25,7 @@ import org.apache.maven.plugin.MojoFailureException;
 public class SeleneseMojo extends AbstractMojo {
 
     /**
-     * @parameter default-value="htmlunit"
+     * @parameter default-value="HTMLUnitIE7"
      */
     private String webDriver;
     /**
@@ -46,8 +46,9 @@ public class SeleneseMojo extends AbstractMojo {
             List<Future<SuiteResult>> results = new ArrayList<Future<SuiteResult>>();
             for (SeleneseSuiteGroup g : groups) {
                 for (File f : g.getSuites()) {
+                    String webDriverProfile = g.getWebDriver() != null ? g.getWebDriver() : webDriver;
                     File reportDirectory = g.getReportsDirectory() != null ? g.getReportsDirectory() : reportsDirectory;
-                    results.add(exec.submit(new SuiteRunner(g.getBaseURL(), f, new File(reportDirectory, getReportFileName(f.getName())))));
+                    results.add(exec.submit(new SuiteRunner(webDriverProfile, g.getBaseURL(), f, new File(reportDirectory, getReportFileName(f.getName())))));
                 }
             }
             if (results.size() != 0) {
@@ -60,7 +61,7 @@ public class SeleneseMojo extends AbstractMojo {
                     try {
                         SuiteResult r = f.get();
                         getLog().info(String.format("Executed suite %s : %s", r.getSuite().getFileName(), r.getSuite().getTitle()));
-                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s", r.getTotalTests(), r.getTestFailures(), r.getTime()));
+                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s%s", r.getTotalTests(), r.getTestFailures(), r.getTime(), r.getTestFailures() ==0 ?"":"<<< FAILURE!"));
                         totalTests += r.getTotalTests();
                         totalFailures += r.getTestFailures();
                     } catch (Exception ex) {

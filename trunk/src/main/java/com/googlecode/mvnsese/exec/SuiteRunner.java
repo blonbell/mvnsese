@@ -1,27 +1,25 @@
 package com.googlecode.mvnsese.exec;
 
-import com.gargoylesoftware.htmlunit.WebClient;
 import com.googlecode.mvnsese.model.Command;
 import com.googlecode.mvnsese.model.SeleneseParser;
 import com.googlecode.mvnsese.model.SeleneseSuite;
 import com.googlecode.mvnsese.model.SeleneseTest;
 import com.thoughtworks.selenium.Selenium;
+import com.thoughtworks.selenium.SeleniumException;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.security.GeneralSecurityException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverBackedSelenium;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.server.htmlrunner.HTMLTestResults;
 
 public class SuiteRunner implements Callable<SuiteResult> {
@@ -62,11 +60,14 @@ public class SuiteRunner implements Callable<SuiteResult> {
             + "<td>{3}</td>\n"
             + "</tr>\n";
     static Map<String, CommandExecutor> executorMap = buildExecutorMap();
+    static Map<String, WebDriverProfileFactory> profileMap = buildProfileMap();
+    String driverProfile;
     String baseURL;
     File suiteFile;
     File reportFile;
 
-    public SuiteRunner(String baseURL, File suiteFile, File reportFile) {
+    public SuiteRunner(String driverProfile, String baseURL, File suiteFile, File reportFile) {
+        this.driverProfile = driverProfile;
         this.baseURL = baseURL;
         this.suiteFile = suiteFile;
         this.reportFile = reportFile;
@@ -74,26 +75,12 @@ public class SuiteRunner implements Callable<SuiteResult> {
 
     public SuiteResult call() throws Exception {
         SeleneseSuite suite = (SeleneseSuite) SeleneseParser.parse(suiteFile);
-        HtmlUnitDriver driver = new HtmlUnitDriver() {
 
-            @Override
-            protected WebClient modifyWebClient(WebClient client) {
-                try {
-                    client.setUseInsecureSSL(true);
-                } catch (GeneralSecurityException ex) {
-                    ex.printStackTrace();
-                }
-                return client;
-            }
-        };
-
-        Logger.getLogger("com.gargoylesoftware.htmlunit.DefaultCssErrorHandler").setLevel(Level.OFF);
-        Logger.getLogger("com.gargoylesoftware.htmlunit.IncorrectnessListenerImpl").setLevel(Level.OFF);
-        //Logger.getLogger("com.gargoylesoftware.htmlunit.javascript.StrictErrorReporter").setLevel(Level.OFF);
-        Logger.getLogger("com.gargoylesoftware.htmlunit.javascript").setLevel(Level.ALL);
-        Logger.getLogger("org.apache.http.client.protocol.ResponseProcessCookies").setLevel(Level.OFF);
-
-        driver.setJavascriptEnabled(true);
+        WebDriverProfileFactory factory = profileMap.get(driverProfile);
+        if (factory == null) {
+            throw new SeleniumException(String.format("Unknown WebDriver profile %s", driverProfile));
+        }
+        WebDriver driver = factory.buildWebDriver();
 
 
         StringBuilder log = new StringBuilder();
@@ -113,6 +100,7 @@ public class SuiteRunner implements Callable<SuiteResult> {
                     log.append(String.format("info: Executing: |%s | %s | %s | \n", c.getName(), c.getTarget(), c.getValue()));
                     CommandResult result = executor.execute(selenium, testCtx, c);
                     cmdResults.add(result);
+                    //log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
                     if (result.getResult() != Result.PASSED) {
                         log.append(String.format("error %s\n", result.getMsg()));
                         log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
@@ -242,5 +230,14 @@ public class SuiteRunner implements Callable<SuiteResult> {
 
         return executors;
 
+    }
+
+    static Map<String, WebDriverProfileFactory> buildProfileMap() {
+        Map<String, WebDriverProfileFactory> profiles = new HashMap<String, WebDriverProfileFactory>();
+        ServiceLoader<WebDriverProfileFactory> profileImpls = ServiceLoader.load(WebDriverProfileFactory.class);
+        for (WebDriverProfileFactory factory : profileImpls) {
+            profiles.put(factory.profileName(), factory);
+        }
+        return profiles;
     }
 }

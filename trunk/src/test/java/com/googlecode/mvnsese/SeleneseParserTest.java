@@ -51,10 +51,10 @@ public class SeleneseParserTest {
        assertEquals(5,test.getCommands().size());
        Command command = test.getCommands().get(0);
        assertEquals("open", command.getName());
-       assertEquals("/", command.getTarget());
+       assertEquals("/search?hl=en&q=selenium", command.getTarget());
        assertEquals("", command.getValue());
        command = test.getCommands().get(1);
-       assertEquals("typeKeys", command.getName());
+       assertEquals("type", command.getName());
        assertEquals("q", command.getTarget());
        assertEquals("selenium", command.getValue());
 
@@ -80,10 +80,10 @@ public class SeleneseParserTest {
        assertEquals(5,test.getCommands().size());
        Command command = test.getCommands().get(0);
        assertEquals("open", command.getName());
-       assertEquals("/", command.getTarget());
+       assertEquals("/search?hl=en&q=selenium", command.getTarget());
        assertEquals("", command.getValue());
        command = test.getCommands().get(1);
-       assertEquals("typeKeys", command.getName());
+       assertEquals("type", command.getName());
        assertEquals("q", command.getTarget());
        assertEquals("selenium", command.getValue());
 
