@@ -48,7 +48,7 @@ public class SeleneseParserTest {
        assertEquals("http://www.google.com/",test.getBaseURL());
        assertEquals("target"+File.separator+"test-classes"+File.separator+"google.html", test.getFileName());
        assertNotNull(test.getCommands());
-       assertEquals(5,test.getCommands().size());
+       assertEquals(6,test.getCommands().size());
        Command command = test.getCommands().get(0);
        assertEquals("open", command.getName());
        assertEquals("/search?hl=en&q=selenium", command.getTarget());
@@ -77,7 +77,7 @@ public class SeleneseParserTest {
        assertEquals("http://www.google.com/",test.getBaseURL());
        assertEquals("google.html", test.getFileName());
        assertNotNull(test.getCommands());
-       assertEquals(5,test.getCommands().size());
+       assertEquals(6,test.getCommands().size());
        Command command = test.getCommands().get(0);
        assertEquals("open", command.getName());
        assertEquals("/search?hl=en&q=selenium", command.getTarget());
