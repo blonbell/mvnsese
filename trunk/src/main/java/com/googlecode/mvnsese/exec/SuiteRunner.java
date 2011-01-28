@@ -203,31 +203,12 @@ public class SuiteRunner implements Callable<SuiteResult> {
 
     static Map<String, CommandExecutor> buildExecutorMap() {
         Map<String, CommandExecutor> executors = new HashMap<String, CommandExecutor>();
-        for (Method m : Selenium.class.getMethods()) {
-            String name = m.getName();
-            if (name.startsWith("get")) {
-                name = name.substring(3);
-                executors.put("store" + name, new StoreCommandExecutor(m));
-                executors.put("assert" + name, new AssertCommandExecutor(m));
-                executors.put("verify" + name, new AssertCommandExecutor(m));
-                executors.put("waitFor" + name, new WaitForCommandExecutor(m));
-            }
-            if (name.startsWith("is")) {
-                name = name.substring(2);
-                executors.put("store" + name, new StoreCommandExecutor(m));
-                executors.put("verify" + name, new VerifyCommandExecutor(m));
-                executors.put("assert" + name, new AssertCommandExecutor(m));
-                executors.put("waitFor" + name, new WaitForCommandExecutor(m));
-            }
-            if (name.startsWith("click") || name.startsWith("doubleClick")) {
-                executors.put(name, new DirectCommandExecutor(m));
-                executors.put(name + "AndWait", new AndWaitCommandExecutor(m));
-            } else {
-                executors.put(name, new DirectCommandExecutor(m));
-            }
+        DefaultCommandFactory defFactory = new DefaultCommandFactory();
+        defFactory.register(executors);
+        ServiceLoader<CommandFactory> cmdImpls = ServiceLoader.load(CommandFactory.class);
+        for (CommandFactory factory : cmdImpls) {
+            factory.register(executors);
         }
-        executors.put("pause", new PauseCommandExecutor());
-
         return executors;
 
     }
