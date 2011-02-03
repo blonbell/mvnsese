@@ -10,7 +10,7 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 public class DefaultWebDriverProfileFactory implements WebDriverProfileFactory {
 
-    public static final String PROFILE = "HTMLUnitIE7";
+    public static final String PROFILE = "default";
 
     public String profileName() {
         return PROFILE;

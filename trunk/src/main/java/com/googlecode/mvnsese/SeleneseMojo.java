@@ -1,5 +1,6 @@
 package com.googlecode.mvnsese;
 
+import com.googlecode.mvnsese.exec.ExecContext;
 import com.googlecode.mvnsese.exec.SuiteResult;
 import com.googlecode.mvnsese.exec.SuiteRunner;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import static com.googlecode.mvnsese.exec.ExecContext.TraceLevel;
 
 /**
  *
@@ -25,14 +27,27 @@ import org.apache.maven.plugin.MojoFailureException;
 public class SeleneseMojo extends AbstractMojo {
 
     /**
-     * @parameter default-value="HTMLUnitIE7"
+     * @parameter default-value="default"
      */
     private String webDriver;
     /**
-     *
      * @parameter default-value="${project.build.directory}/selenese-reports"
      */
     private File reportsDirectory;
+    /**
+     * Maximum time in miliseconds each command may run
+     * @parameter default-value="30000"
+     */
+    private String timeout;
+    /**
+     * Maximum time in seconds each Test may run. 0 means no limit
+     * @parameter default-value="0"
+     */
+    private long maxTestTime;
+    /**
+     * @parameter default-value="none"
+     */
+    private String traceHTML;
     /**
      * @parameter
      * @required
@@ -45,10 +60,18 @@ public class SeleneseMojo extends AbstractMojo {
         try {
             List<Future<SuiteResult>> results = new ArrayList<Future<SuiteResult>>();
             for (SeleneseSuiteGroup g : groups) {
+                ExecContext ctx = new ExecContext();
+                ctx.setWebDriver(g.getWebDriver() != null ? g.getWebDriver() : webDriver);
+                ctx.setBaseURL(g.getBaseURL());
+                ctx.setTimeout(timeout.compareTo(g.getTimeout()) < 1 ? g.getTimeout() : timeout);
+                ctx.setMaxTestTime(g.getMaxTestTime() > 0 ? g.getMaxTestTime() : maxTestTime);
+                TraceLevel pLevel = TraceLevel.getLevel(g.getTraceHTML());
+                TraceLevel gLevel = TraceLevel.getLevel(traceHTML);
+                ctx.setTraceHTML(gLevel.ordinal() > pLevel.ordinal() ? gLevel : pLevel);
                 for (File f : g.getSuites()) {
-                    String webDriverProfile = g.getWebDriver() != null ? g.getWebDriver() : webDriver;
                     File reportDirectory = g.getReportsDirectory() != null ? g.getReportsDirectory() : reportsDirectory;
-                    results.add(exec.submit(new SuiteRunner(webDriverProfile, g.getBaseURL(), f, new File(reportDirectory, getReportFileName(f.getName())))));
+
+                    results.add(exec.submit(new SuiteRunner(f, new File(reportDirectory, getReportFileName(f.getName())), ctx)));
                 }
             }
             if (results.size() != 0) {
@@ -61,7 +84,7 @@ public class SeleneseMojo extends AbstractMojo {
                     try {
                         SuiteResult r = f.get();
                         getLog().info(String.format("Executed suite %s : %s", r.getSuite().getFileName(), r.getSuite().getTitle()));
-                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s%s", r.getTotalTests(), r.getTestFailures(), r.getTime(), r.getTestFailures() ==0 ?"":"<<< FAILURE!"));
+                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s%s", r.getTotalTests(), r.getTestFailures(), r.getTime(), r.getTestFailures() == 0 ? "" : "<<< FAILURE!"));
                         totalTests += r.getTotalTests();
                         totalFailures += r.getTestFailures();
                     } catch (Exception ex) {

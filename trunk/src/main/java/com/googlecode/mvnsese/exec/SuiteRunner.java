@@ -9,7 +9,6 @@ import com.thoughtworks.selenium.SeleniumException;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +20,7 @@ import java.util.concurrent.Callable;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverBackedSelenium;
 import org.openqa.selenium.server.htmlrunner.HTMLTestResults;
+import static com.googlecode.mvnsese.exec.ExecContext.TraceLevel;
 
 public class SuiteRunner implements Callable<SuiteResult> {
 
@@ -61,14 +61,12 @@ public class SuiteRunner implements Callable<SuiteResult> {
             + "</tr>\n";
     static Map<String, CommandExecutor> executorMap = buildExecutorMap();
     static Map<String, WebDriverProfileFactory> profileMap = buildProfileMap();
-    String driverProfile;
-    String baseURL;
+    ExecContext execCtx;
     File suiteFile;
     File reportFile;
 
-    public SuiteRunner(String driverProfile, String baseURL, File suiteFile, File reportFile) {
-        this.driverProfile = driverProfile;
-        this.baseURL = baseURL;
+    public SuiteRunner(File suiteFile, File reportFile, ExecContext execCtx) {
+        this.execCtx = execCtx;
         this.suiteFile = suiteFile;
         this.reportFile = reportFile;
     }
@@ -76,34 +74,42 @@ public class SuiteRunner implements Callable<SuiteResult> {
     public SuiteResult call() throws Exception {
         SeleneseSuite suite = (SeleneseSuite) SeleneseParser.parse(suiteFile);
 
-        WebDriverProfileFactory factory = profileMap.get(driverProfile);
+        WebDriverProfileFactory factory = profileMap.get(execCtx.getWebDriver());
         if (factory == null) {
-            throw new SeleniumException(String.format("Unknown WebDriver profile %s", driverProfile));
+            throw new SeleniumException(String.format("Unknown WebDriver profile %s", execCtx.getWebDriver()));
         }
         WebDriver driver = factory.buildWebDriver();
 
 
         StringBuilder log = new StringBuilder();
         List<TestResult> testResults = new ArrayList<TestResult>();
+        long maxTestTime = execCtx.getMaxTestTime()> 0? execCtx.getMaxTestTime() * 1000: Long.MAX_VALUE;
         long startTime = System.currentTimeMillis();
 
         for (SeleneseTest test : suite.getTests()) {
             List<CommandResult> cmdResults = new ArrayList<CommandResult>();
             TestResult testResult = new TestResult(test, cmdResults);
-            Selenium selenium = new WebDriverBackedSelenium(driver, baseURL != null ? baseURL : test.getBaseURL());
+            Selenium selenium = new WebDriverBackedSelenium(driver, execCtx.getBaseURL() != null ? execCtx.getBaseURL() : test.getBaseURL());
             log.append(String.format("info: Starting test %s\n", new File(suiteFile.getParentFile(), test.getFileName())));
             boolean testFailed = false;
             Map<String, Object> testCtx = new HashMap<String, Object>();
+            testCtx.put(CommandExecutor.TIMEOUT, execCtx.getTimeout());
             for (Command c : test.getCommands()) {
                 CommandExecutor executor = executorMap.get(c.getName());
                 if (executor != null) {
                     log.append(String.format("info: Executing: |%s | %s | %s | \n", c.getName(), c.getTarget(), c.getValue()));
                     CommandResult result = executor.execute(selenium, testCtx, c);
                     cmdResults.add(result);
-                    //log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                    if (execCtx.getTraceHTML() == TraceLevel.ALL) {
+                        log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                    }
+
                     if (result.getResult() != Result.PASSED) {
                         log.append(String.format("error %s\n", result.getMsg()));
-                        //log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                        if (execCtx.getTraceHTML() == TraceLevel.ERROR) {
+                            log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                        }
+
                         if (!testFailed) {
                             log.append(String.format("warn: currentTest.recordFailure: false\n"));
                         }
@@ -125,6 +131,11 @@ public class SuiteRunner implements Callable<SuiteResult> {
                 }
             }
             testResults.add(testResult);
+            if (System.currentTimeMillis() - startTime > maxTestTime) {
+                log.append(String.format("error: max test time %d exceeded\n", execCtx.getMaxTestTime()));
+                testFailed = true;
+                break;
+            }
         }
         long duration = System.currentTimeMillis() - startTime;
 
