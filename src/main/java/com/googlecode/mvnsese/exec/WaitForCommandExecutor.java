@@ -18,7 +18,8 @@ public class WaitForCommandExecutor extends ReflectiveCommandExecutor {
             return res.fail("no value specified");
         }
         long start = System.currentTimeMillis();
-        while (System.currentTimeMillis() - start <= 30000) {
+        long timeout = Long.parseLong((String)env.get(TIMEOUT));
+        while (System.currentTimeMillis() - start <= timeout) {
             try {
                 if (c.getValue().equals(execute(s, c))) {
                     return res;

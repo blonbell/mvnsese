@@ -8,19 +8,30 @@ public class SeleneseSuiteGroup {
      * @parameter
      */
     private String baseURL;
-
     /**
-     * @parameter default-value="htmlunit"
+     * @parameter default-value="default"
      */
     private String webDriver;
-
     /**
      *
      * @parameter default-value="${project.build.directory}/selenese-reports"
      */
     private File reportsDirectory;
     /**
+     * @parameter default-value="30000"
+     */
+    private String timeout;
+    /**
+     * @parameter default-value="0"
+     */
+    private long maxTestTime;
+    /**
+     * @parameter default-value="none"
+     */
+    private String traceHTML;
+    /**
      * @parameter
+     * @required
      */
     private File[] suites;
 
@@ -32,7 +43,7 @@ public class SeleneseSuiteGroup {
         this.baseURL = baseURL;
     }
 
-     public String getWebDriver() {
+    public String getWebDriver() {
         return webDriver;
     }
 
@@ -54,5 +65,29 @@ public class SeleneseSuiteGroup {
 
     public void setSuites(File[] suites) {
         this.suites = suites;
+    }
+
+    public String getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(String timeout) {
+        this.timeout = timeout;
+    }
+
+    public long getMaxTestTime() {
+        return maxTestTime;
+    }
+
+    public void setMaxTestTime(long maxTestTime) {
+        this.maxTestTime = maxTestTime;
+    }
+
+    public String getTraceHTML() {
+        return traceHTML;
+    }
+
+    public void setTraceHTML(String traceHTML) {
+        this.traceHTML = traceHTML;
     }
 }
