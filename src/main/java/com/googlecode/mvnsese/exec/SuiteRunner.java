@@ -91,6 +91,7 @@ public class SuiteRunner implements Callable<SuiteResult> {
             TestResult testResult = new TestResult(test, cmdResults);
             Selenium selenium = new WebDriverBackedSelenium(driver, execCtx.getBaseURL() != null ? execCtx.getBaseURL() : test.getBaseURL());
             log.append(String.format("info: Starting test %s\n", new File(suiteFile.getParentFile(), test.getFileName())));
+            log.append(String.format("info: Base URL %s\n", execCtx.getBaseURL()));
             boolean testFailed = false;
             Map<String, Object> testCtx = new HashMap<String, Object>();
             testCtx.put(CommandExecutor.TIMEOUT, execCtx.getTimeout());
