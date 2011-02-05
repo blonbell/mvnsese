@@ -58,9 +58,9 @@ public class DefaultWebDriverProfileFactory implements WebDriverProfileFactory {
                     }
                 }
                 try {
+                    client.setWebConnection(new WhiteBlackListWebConnection(whiteList, blackList, client));
                     client.setUseInsecureSSL(true);
                     client.setJavaScriptEnabled(true);
-                    client.setWebConnection(new WhiteBlackListWebConnection(whiteList, blackList, client));
                 } catch (GeneralSecurityException ex) {
                     ex.printStackTrace();
                 }

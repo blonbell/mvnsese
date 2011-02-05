@@ -63,7 +63,11 @@ public class SeleneseMojo extends AbstractMojo {
                 ExecContext ctx = new ExecContext();
                 ctx.setWebDriver(g.getWebDriver() != null ? g.getWebDriver() : webDriver);
                 ctx.setBaseURL(g.getBaseURL());
-                ctx.setTimeout(timeout.compareTo(g.getTimeout()) < 1 ? g.getTimeout() : timeout);
+                if (g.getTimeout() != null && timeout.compareTo(g.getTimeout()) > 0) {
+                    ctx.setTimeout(g.getTimeout());
+                } else {
+                    ctx.setTimeout(timeout);
+                }
                 ctx.setMaxTestTime(g.getMaxTestTime() > 0 ? g.getMaxTestTime() : maxTestTime);
                 TraceLevel pLevel = TraceLevel.getLevel(g.getTraceHTML());
                 TraceLevel gLevel = TraceLevel.getLevel(traceHTML);
@@ -84,7 +88,7 @@ public class SeleneseMojo extends AbstractMojo {
                     try {
                         SuiteResult r = f.get();
                         getLog().info(String.format("Executed suite %s : %s", r.getSuite().getFileName(), r.getSuite().getTitle()));
-                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s%s", r.getTotalTests(), r.getTestFailures(), r.getTime(), r.getTestFailures() == 0 ? "" : "<<< FAILURE!"));
+                        getLog().info(String.format("Tests run: %d, Failures %d Time elapsed: %s%s", r.getTotalTests(), r.getTestFailures(), r.getTime(), r.getTestFailures() == 0 ? "" : " <<< FAILURE!"));
                         totalTests += r.getTotalTests();
                         totalFailures += r.getTestFailures();
                     } catch (Exception ex) {
