@@ -94,7 +94,7 @@ public class DefaultWebDriverProfileFactory implements WebDriverProfileFactory {
             String host = request.getUrl().getHost();
             if (whitelist.length > 0) {
                 allowed = false;
-                for (String d : blacklist) {
+                for (String d : whitelist) {
                     if (host.endsWith(d)) {
                         allowed = true;
                     }
