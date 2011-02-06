@@ -2,9 +2,12 @@ package com.googlecode.mvnsese;
 
 import com.googlecode.mvnsese.exec.DefaultWebDriverProfileFactory;
 import com.googlecode.mvnsese.exec.ExecContext;
+import com.googlecode.mvnsese.exec.StoreCommandExecutor;
 import com.googlecode.mvnsese.exec.SuiteResult;
 import com.googlecode.mvnsese.exec.SuiteRunner;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -32,6 +35,15 @@ public class SeleneseRunnerTest {
 
     @After
     public void tearDown() {
+    }
+
+    @Test
+    public void substituteVars() throws Exception {
+        Map<String, Object> env = new HashMap<String, Object>();
+        env.put("foo", "bar");
+        env.put("bar", "foo");
+        String eval = "Test ${foo} test ${bar} Test";
+        assertEquals("Test bar test foo Test", StoreCommandExecutor.substituteVariables(eval, env));
     }
 
     @Test

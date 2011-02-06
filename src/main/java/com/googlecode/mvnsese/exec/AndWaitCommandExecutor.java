@@ -15,7 +15,7 @@ public class AndWaitCommandExecutor extends ReflectiveCommandExecutor {
     public CommandResult execute(Selenium s, Map<String, Object> env, Command c) {
         CommandResult res = new CommandResult(c);
         try {
-            execute(s, c);
+            evaluate(s, env, c);
             s.waitForPageToLoad((String)env.get(TIMEOUT));
         } catch (SeleniumException se) {
             res.fail(se.getMessage());

@@ -21,7 +21,7 @@ public class WaitForCommandExecutor extends ReflectiveCommandExecutor {
         long timeout = Long.parseLong((String)env.get(TIMEOUT));
         while (System.currentTimeMillis() - start <= timeout) {
             try {
-                if (c.getValue().equals(execute(s, c))) {
+                if (c.getValue().equals(evaluate(s, env, c))) {
                     return res;
                 }
             } catch (SeleniumException se) {

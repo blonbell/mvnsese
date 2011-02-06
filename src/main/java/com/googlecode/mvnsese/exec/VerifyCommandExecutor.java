@@ -15,7 +15,7 @@ public class VerifyCommandExecutor extends ReflectiveCommandExecutor {
     public CommandResult execute(Selenium s, Map<String, Object> env, Command c) {
         CommandResult res = new CommandResult(c);
         try {
-            Object r = execute(s, c);
+            Object r = evaluate(s, env, c);
             if (r == null){
                 res.fail(String.format("Element %s not found",c.getTarget()));
             }else if (r instanceof Boolean) {
