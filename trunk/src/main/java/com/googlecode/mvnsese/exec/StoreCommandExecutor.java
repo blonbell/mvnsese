@@ -19,8 +19,12 @@ public class StoreCommandExecutor extends ReflectiveCommandExecutor {
     public CommandResult execute(Selenium s, Map<String, Object> env, Command c) {
         CommandResult res = new CommandResult(c);
         try {
-            Object value = evaluate(s, null, c);
-            env.put(c.getTarget(), value);
+            Object value = evaluate(s, env, c);
+            if (m.getParameterTypes().length == 0) {
+                env.put(c.getTarget(), value);
+            } else if (m.getParameterTypes().length == 1) {
+                env.put(c.getValue(), value);
+            }
         } catch (SeleniumException se) {
             res.fail(se.getMessage());
         }
