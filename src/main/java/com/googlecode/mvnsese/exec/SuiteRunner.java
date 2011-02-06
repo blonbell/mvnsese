@@ -102,13 +102,13 @@ public class SuiteRunner implements Callable<SuiteResult> {
                     CommandResult result = executor.execute(selenium, testCtx, c);
                     cmdResults.add(result);
                     if (execCtx.getTraceHTML() == TraceLevel.ALL) {
-                        log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                        log.append(String.format("*****************\n%s\n%s\n*****************\n", selenium.getLocation(), selenium.getHtmlSource()));
                     }
 
                     if (result.getResult() != Result.PASSED) {
                         log.append(String.format("error %s\n", result.getMsg()));
                         if (execCtx.getTraceHTML() == TraceLevel.ERROR) {
-                            log.append(String.format("*****************\n%s\n*****************\n", selenium.getHtmlSource()));
+                            log.append(String.format("*****************\n%s\n%s\n*****************\n", selenium.getLocation(), selenium.getHtmlSource()));
                         }
 
                         if (!testFailed) {
