@@ -10,9 +10,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.classworlds.ClassRealm;
+import org.codehaus.classworlds.ClassWorld;
 import static com.googlecode.mvnsese.exec.ExecContext.TraceLevel;
 
 /**
@@ -53,11 +58,23 @@ public class SeleneseMojo extends AbstractMojo {
      * @required
      */
     SeleneseSuiteGroup[] groups;
+    /**
+     * @parameter default-value="${project}"
+     */
+    private MavenProject project;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Executing Selenese Suites");
+        if (getLog().isDebugEnabled()) {
+            Logger.getLogger("com.safeway.maven.selenese").setLevel(Level.FINEST);
+        } else if (getLog().isInfoEnabled()) {
+            Logger.getLogger("com.safeway.maven.selenese").setLevel(Level.INFO);
+        }
+
+        ClassLoader orig = Thread.currentThread().getContextClassLoader();
         ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
+            Thread.currentThread().setContextClassLoader(getTestClassPath(project));
             List<Future<SuiteResult>> results = new ArrayList<Future<SuiteResult>>();
             for (SeleneseSuiteGroup g : groups) {
                 ExecContext ctx = new ExecContext();
@@ -102,6 +119,7 @@ public class SeleneseMojo extends AbstractMojo {
                 }
             }
         } finally {
+            Thread.currentThread().setContextClassLoader(orig);
             exec.shutdown();
             try {
                 exec.awaitTermination(5, TimeUnit.MINUTES);
@@ -117,6 +135,21 @@ public class SeleneseMojo extends AbstractMojo {
             return filename.substring(0, index) + "-REPORT" + filename.substring(index);
         } else {
             return filename + "-REPORT";
+        }
+    }
+
+    protected ClassLoader getTestClassPath(MavenProject project) throws MojoExecutionException {
+        try {
+            ClassWorld cw = new ClassWorld();
+            ClassRealm realm = cw.newRealm("maven.plugin." + getClass().getSimpleName(), Thread.currentThread().getContextClassLoader());
+            List<String> elements = (List<String>) project.getTestClasspathElements();
+            for (String element : elements) {
+                File elementFile = new File(element);
+                realm.addConstituent(elementFile.toURI().toURL());
+            }
+            return realm.getClassLoader();
+        } catch (Exception e) {
+            throw new MojoExecutionException("Unable to set test classloader", e);
         }
     }
 }

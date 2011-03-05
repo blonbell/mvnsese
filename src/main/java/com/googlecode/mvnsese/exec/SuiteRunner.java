@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverBackedSelenium;
 import org.openqa.selenium.server.htmlrunner.HTMLTestResults;
@@ -24,8 +27,10 @@ import static com.googlecode.mvnsese.exec.ExecContext.TraceLevel;
 
 public class SuiteRunner implements Callable<SuiteResult> {
 
+    private static Logger clog = Logger.getLogger("com.safeway.maven.selenese.exec.console");
     private static String VERSION = "";
     private static String REVISION = "";
+    private static AtomicBoolean consoleInit = new AtomicBoolean(false);
 
     static {
         try {
@@ -83,18 +88,23 @@ public class SuiteRunner implements Callable<SuiteResult> {
 
         StringBuilder log = new StringBuilder();
         List<TestResult> testResults = new ArrayList<TestResult>();
-        long maxTestTime = execCtx.getMaxTestTime()> 0? execCtx.getMaxTestTime() * 1000: Long.MAX_VALUE;
+        long maxTestTime = execCtx.getMaxTestTime() > 0 ? execCtx.getMaxTestTime() * 1000 : Long.MAX_VALUE;
         long startTime = System.currentTimeMillis();
-
+        if (clog.isLoggable(Level.INFO) && consoleInit.compareAndSet(false, true) && System.console() != null) {
+            System.console().printf("Executing test %65s", "");
+        }
         for (SeleneseTest test : suite.getTests()) {
             List<CommandResult> cmdResults = new ArrayList<CommandResult>();
             TestResult testResult = new TestResult(test, cmdResults);
             Selenium selenium = new WebDriverBackedSelenium(driver, execCtx.getBaseURL() != null ? execCtx.getBaseURL() : test.getBaseURL());
             log.append(String.format("info: Starting test %s\n", new File(suiteFile.getParentFile(), test.getFileName())));
             log.append(String.format("info: Base URL %s\n", execCtx.getBaseURL()));
-            boolean testFailed = false;
+            if (clog.isLoggable(Level.INFO) && System.console() != null) {
+                printTest(suite, test);
+            }
             Map<String, Object> testCtx = new HashMap<String, Object>();
             testCtx.put(CommandExecutor.TIMEOUT, execCtx.getTimeout());
+            selenium.setTimeout(execCtx.getTimeout());
             for (Command c : test.getCommands()) {
                 CommandExecutor executor = executorMap.get(c.getName());
                 if (executor != null) {
@@ -111,39 +121,66 @@ public class SuiteRunner implements Callable<SuiteResult> {
                             log.append(String.format("*****************\n%s\n%s\n*****************\n", selenium.getLocation(), selenium.getHtmlSource()));
                         }
 
-                        if (!testFailed) {
+                        if (testResult.getResult() != Result.PASSED) {
                             log.append(String.format("warn: currentTest.recordFailure: false\n"));
                         }
-                        testFailed = true;
+                        testResult.setResult(Result.FAILED);
                         if (result.getResult() == Result.ASSERT_FAILED) {
                             break;
                         }
                     }
                 } else {
                     log.append(String.format("error: Unknown command: '%s'\n", c.getName()));
-                    if (!testFailed) {
+                    if (testResult.getResult() != Result.PASSED) {
                         log.append(String.format("warn: currentTest.recordFailure: Unknown command: '%s'\n", c.getName()));
                     }
                     CommandResult result = new CommandResult(c);
                     result.setResult(Result.ERROR);
                     result.setMsg(String.format("Unknown command: '%s'\n", c.getName()));
                     cmdResults.add(result);
-                    testFailed = true;
+                    testResult.setResult(Result.FAILED);
                 }
             }
             testResults.add(testResult);
             if (System.currentTimeMillis() - startTime > maxTestTime) {
                 log.append(String.format("error: max test time %d exceeded\n", execCtx.getMaxTestTime()));
-                testFailed = true;
+                testResult.setResult(Result.FAILED);
                 break;
             }
         }
+        if (clog.isLoggable(Level.INFO) && System.console() != null) {
+            System.console().printf("\n\n");
+        }
+
         long duration = System.currentTimeMillis() - startTime;
 
 
         return generateReport(suite, testResults, log.toString(), duration, reportFile);
 
 
+    }
+
+    void printTest(SeleneseSuite suite, SeleneseTest test) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 65; i++) {
+            sb.append("\b");
+        }
+        //sb.append("Executing test ");
+        int index = 14;
+        String title = suite.getTitle();
+        for (int i = 0; i < title.length() && i < 30; i++, index++) {
+            sb.append(title.charAt(i));
+        }
+        sb.append(" => ");
+        index+=4;
+        title = test.getTitle();
+        for (int i = 0; i < title.length() && index < 80; i++, index++) {
+            sb.append(title.charAt(i));
+        }
+        for (int i = 1; i < 80 - index; i++) {
+            sb.append(" ");
+        }
+        System.console().printf(sb.toString());
     }
 
     static SuiteResult generateReport(SeleneseSuite suite, List<TestResult> results, String log, long duration, File reportFile) throws Exception {
@@ -162,7 +199,6 @@ public class SuiteRunner implements Callable<SuiteResult> {
             SeleneseTest test = testResult.getTest();
 
             totalTests++;
-            Result testOutcome = Result.PASSED;
             String testStatus = "status_passed";
 
             StringBuilder cmdHtml = new StringBuilder();
@@ -180,15 +216,13 @@ public class SuiteRunner implements Callable<SuiteResult> {
                 } else if (cmdResult.getResult() == Result.FAILED || cmdResult.getResult() == Result.ASSERT_FAILED) {
                     commandsFailed++;
                     cmdStatus = "status_failed";
-                    testOutcome = Result.FAILED;
                 } else {
                     commandsError++;
                     cmdStatus = "status_failed";
-                    testOutcome = Result.FAILED;
                 }
                 cmdHtml.append(MessageFormat.format(COMMAND_RESULT, cmdStatus, cmd.getName(), cmd.getTarget(), cmdResult.getMsg() != null ? cmdResult.getMsg() : cmd.getValue()));
             }
-            if (testOutcome == Result.PASSED) {
+            if (testResult.getResult() == Result.PASSED) {
                 testsPassed++;
             } else {
                 testsFailed++;

@@ -70,7 +70,7 @@ public class DefaultWebDriverProfileFactory implements WebDriverProfileFactory {
 
 
         Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
-        Logger.getLogger("org.apache.http.client.protocol.ResponseProcessCookies").setLevel(Level.OFF);
+        Logger.getLogger("org.apache.http.client").setLevel(Level.OFF);
 
         driver.setJavascriptEnabled(true);
         return driver;
