@@ -1,0 +1,1 @@
+Maven plugin to parse Selenium IDE HTML test suites and test cases (Selenese) and then execute them using a specified WebDriver such as the HTMLUnit driver.
